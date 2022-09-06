@@ -24,6 +24,15 @@ class DataController
             case ["POST", "create"]:
                 $data = (array) json_decode(file_get_contents("php://input"), true);
 
+                $errors = $this->getValidationErrors($data);
+
+                if ( ! empty($errors)) {
+                    $this->sendOutput([
+                        "error" => $errors,
+                    ], 422);
+                    break;
+                }
+
                 $result = $this->addData($data);
 
                 if($result){
@@ -40,6 +49,15 @@ class DataController
 
             case ["POST", "update"]:
                 $data = (array) json_decode(file_get_contents("php://input"), true);
+
+                $errors = $this->getValidationErrors($data);
+
+                if ( ! empty($errors)) {
+                    $this->sendOutput([
+                        "error" => $errors,
+                    ], 422);
+                    break;
+                }
 
                 $result = $this->updateData($data);
 
@@ -192,6 +210,64 @@ class DataController
     {   
         http_response_code($status_code);
         echo json_encode($data);
+    }
+
+    /*
+    validate type of fields 
+    */
+    public function getValidationErrors(array $data): array
+    {
+        $errors = [];
+
+        if (!empty($data)) {
+
+            if (array_key_exists("id", $data)) {
+
+                if (filter_var($data["id"], FILTER_VALIDATE_INT) === false) {
+                    $errors[] = "id must be an integer";
+                }
+            }
+
+            if (empty($data["name"])) {
+                $errors[] = "name is required";
+            }
+
+            if (empty($data["state"])) {
+                if (filter_var($data["id"], FILTER_VALIDATE_INT) === false) {
+                    $errors[] = "state is required";
+                }
+            }
+
+            if (empty($data["zip"])) {
+                $errors[] = "zip is required";
+            } else {
+                if (filter_var($data["zip"], FILTER_VALIDATE_INT) === false) {
+                    $errors[] = "zip must be an integer";
+                }
+            }
+
+            if (empty($data["amount"])) {
+                $errors[] = "amount is required";
+            } else {
+                if (filter_var($data["amount"], FILTER_VALIDATE_FLOAT) === false) {
+                    $errors[] = "amount must be an float";
+                }
+            }
+
+            if (empty($data["qty"])) {
+                $errors[] = "qty is required";
+            } else {
+                if (filter_var($data["qty"], FILTER_VALIDATE_INT) === false) {
+                    $errors[] = "qty must be an integer";
+                }
+            }
+
+            if (empty($data["item"])) {
+                $errors[] = "item is required";
+            }
+        }
+        print_r($errors);
+        return $errors;
     }
 
 
