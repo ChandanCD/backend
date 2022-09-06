@@ -4,9 +4,9 @@ class DataController
 {
     private $csvFile = '';
 
-    public function __construct()
+    public function __construct(string $filePath)
     {
-        $this->csvFile = __DIR__ . "/data.csv";
+        $this->csvFile = $filePath;
     }
     
     public function processRequest(string $method, ?string $action, ?string $id)

@@ -38,7 +38,7 @@ $action = $parts[3] ?? "getdata"; // action allowed getdata, create , update , d
 
 $id = $parts[4] ?? null;
 
-$controller = new DataController();
+$controller = new DataController(__DIR__ . '/src/data.csv');
 
 $controller->processRequest($_SERVER["REQUEST_METHOD"], $action, $id);
 
