@@ -9,6 +9,11 @@ class DataController
         $this->csvFile = $filePath;
     }
     
+    /*
+    Process GET, POST method
+    Method parameter is Mandatory
+    action and id is optional
+    */
     public function processRequest(string $method, ?string $action, ?string $id)
     {
         switch ([$method, $action]) {
@@ -73,7 +78,9 @@ class DataController
                 header("Allow: GET, POST");
         }
     }
-    
+  /*
+  read data from csv and return as array
+  */
   public function readData(string $path): array
   {
     $csv = [];
@@ -86,7 +93,9 @@ class DataController
     }
     return $csv;
   }
-
+    /*
+    update data based on id
+    */
     public function updateData(array $data): int
     {
         $id = $data['id'];
@@ -103,7 +112,9 @@ class DataController
         $this->writeCSV($getAllData);
         return $id;
     }
-
+    /*
+    remove data from csv based on id
+    */
     public function deleteData(string $id): bool
     {
         $getAllData = $this->readData($this->csvFile);
@@ -121,6 +132,10 @@ class DataController
         return $this->writeCSV($getAllData);
     }
 
+    /*
+    creates new file with defined header if not exists and appends data
+    append new data into csv
+    */
     public function addData(array $data): bool
     {
         // check if file exists or not
@@ -134,7 +149,10 @@ class DataController
         fputcsv($fp, $data);
         return fclose($fp);
     }
-
+    /*
+    Operns csv file in srite mode 
+    writes array of data into csv file
+    */
     public function writeCSV(array $data): bool
     {  
         // open file in write only mode
@@ -149,6 +167,10 @@ class DataController
         return false;
     }
 
+    /*
+     combine header with associated data
+     creates new array with header as key
+    */
     public function arrayToassociativeArray(array $data): array
     {
         $header = array_shift($data); // get first row / header
@@ -163,6 +185,9 @@ class DataController
         return $result;
     }
 
+    /*
+    format data in json and send to end point with http status code
+    */
     protected function sendOutput(array $data, int $status_code): void
     {   
         http_response_code($status_code);
