@@ -1,24 +1,47 @@
 <?php
+require_once('interfaces/CsvUserData.php');
+require_once('Traits/ApiResponse.php');
 
-class DataController
+// namespace Traits;
+use \interfaces\CsvUserData;
+use \Traits\ApiResponse;
+
+
+class DataController implements CsvUserData
 {
-    private $csvFile = '';
+    // use \Traits\ApiResponse;
+    use ApiResponse;
 
+    private $csvFile = '';
+    public $test;
+    
+    /**
+     * __construct
+     *
+     * @param  mixed $filePath
+     * @return void
+     */
     public function __construct(string $filePath)
     {
         $this->csvFile = $filePath;
     }
-    
-    /*
-    Process GET, POST method
-    Method parameter is Mandatory
-    action and id is optional
-    */
-    public function processRequest(string $method, ?string $action, ?string $id)
+     
+    /**
+     * processRequest
+     * Process GET, POST method
+     * @param  mixed $method
+     * @param  mixed $action
+     * @param  mixed $id
+     * @return void
+     */
+    public function processRequest(string $method, ?string $action, ?int $id)
     {
         switch ([$method, $action]) {
             case ["GET", "getdata"]:
-                echo json_encode($this->arrayToassociativeArray($this->readData($this->csvFile)));
+                return $this->successResponse(
+                    $this->arrayToassociativeArray($this->readData($this->csvFile)),
+                     true, 200
+                );
                 break;
                 
             case ["POST", "create"]:
@@ -27,22 +50,20 @@ class DataController
                 $errors = $this->getValidationErrors($data);
 
                 if ( ! empty($errors)) {
-                    $this->sendOutput([
-                        "error" => $errors,
-                    ], 422);
-                    break;
+                    return $this->errorResponse($errors, false, 422);
                 }
 
                 $result = $this->addData($data);
 
                 if($result){
-                    $this->sendOutput([
-                        "message" => "data created",
-                    ], 200);
+                    return $this->successResponse(
+                        "data created",
+                         true, 200
+                    );
                 }else{
-                    $this->sendOutput([
-                        "error" => 'Failed to create',
-                    ], 304);
+                    return $this->errorResponse(
+                       'Failed to create', false
+                    , 304);
                 }
                 
                 break;
@@ -53,24 +74,22 @@ class DataController
                 $errors = $this->getValidationErrors($data);
 
                 if ( ! empty($errors)) {
-                    $this->sendOutput([
-                        "error" => $errors,
-                    ], 422);
-                    break;
+                    return $this->errorResponse(
+                        $errors, false
+                     , 422);
                 }
 
                 $result = $this->updateData($data);
 
                 if($result){
-                    $this->sendOutput([
-                        "message" => "data updated",
-                        "id" => $id
-                    ], 200);
+                    return $this->successResponse(
+                        "data updated",
+                         true, 200
+                    );
                 }else{
-                    $this->sendOutput([
-                        "error" => 'Failed to update',
-                        "id" => $id
-                    ], 304);
+                    return $this->errorResponse(
+                        'Failed to update', false
+                     , 304);
                 }
 
                 break;
@@ -78,15 +97,14 @@ class DataController
                 $result = $this->deleteData($id);
 
                 if($result){
-                    $this->sendOutput([
-                        "message" => "data deleted",
-                        "id" => $id
-                    ], 200);
+                    return $this->successResponse(
+                        "data deleted",
+                         true, 200
+                    );
                 }else{
-                    $this->sendOutput([
-                        "error" => 'Failed to detele',
-                        "id" => $id
-                    ], 200);
+                    return $this->errorResponse(
+                        'Failed to detele', false
+                     , 304);
                 }
 
                 break;
@@ -96,9 +114,13 @@ class DataController
                 header("Allow: GET, POST");
         }
     }
-  /*
-  read data from csv and return as array
-  */
+ 
+  /**
+   * readData
+   * read data from csv
+   * @param  mixed $path
+   * @return array
+   */
   public function readData(string $path): array
   {
     $csv = [];
@@ -111,16 +133,20 @@ class DataController
     }
     return $csv;
   }
-    /*
-    update data based on id
-    */
+   
+    /**
+     * updateData
+     * update data based on id
+     * @param  mixed $data
+     * @return int
+     */
     public function updateData(array $data): int
     {
-        $id = $data['id'];
+        $id = array_key_exists("id",$data) ? $data['id'] : 0 ;
         $getAllData = $this->readData($this->csvFile);
-        $this->num = count($getAllData);
+        $num = count($getAllData);
         // skip header , start from next row
-        for($i = 1; $i < $this->num; $i++){
+        for($i = 1; $i < $num; $i++){
             if (is_numeric($getAllData[$i][0]) && $getAllData[$i][0] == $id) {
                 $getAllData[$i] = array_values($data); // get only values from assiciative array
                 break;
@@ -130,11 +156,17 @@ class DataController
         $this->writeCSV($getAllData);
         return $id;
     }
-    /*
-    remove data from csv based on id
-    */
-    public function deleteData(string $id): bool
+  
+    /**
+     * deleteData
+     * remove data from csv
+     * @param  mixed $id
+     * @return bool
+     */
+    public function deleteData(int $id): bool
     {
+        if ($id == 0) return false;
+
         $getAllData = $this->readData($this->csvFile);
 
         $num = count($getAllData);
@@ -149,13 +181,20 @@ class DataController
 
         return $this->writeCSV($getAllData);
     }
-
-    /*
-    creates new file with defined header if not exists and appends data
-    append new data into csv
-    */
+ 
+    /**
+     * addData
+     * adds data into csv
+     * @param  mixed $data
+     * @return bool
+     */
     public function addData(array $data): bool
     {
+        if(empty($data)) return false; // check if empty array
+
+        //get the count of records in csv file including header
+        $getAllData = $this->readData($this->csvFile);
+        $num = count($getAllData);
         // check if file exists or not
         if(!file_exists($this->csvFile)){
             $keys = ["id","name","state","zip","amount","qty","item"];
@@ -164,31 +203,51 @@ class DataController
         }else{
             $fp = fopen($this->csvFile, 'a'); //Open in append mode to write at the end
         }
+
+        if(!array_key_exists("id", $data)){
+            
+           /* 
+            total row with header row will be same as increamented
+            preped the new key
+           */
+           $data = array("id" => $num) + $data;
+        }else{
+            $data["id"] = $num;
+        }
+        
         fputcsv($fp, $data);
         return fclose($fp);
     }
-    /*
-    Operns csv file in srite mode 
-    writes array of data into csv file
-    */
+            
+    /**
+     * writeCSV
+     * Operns csv file in write mode 
+     * writes array of data into csv file
+     * @param  mixed $data
+     * @return bool
+     */
     public function writeCSV(array $data): bool
     {  
+        if(count($data) == 0) return false;
+
         // open file in write only mode
         if (($fhandle = fopen($this->csvFile, "w")) !== FALSE) {
             foreach ($data as $fields) {
                 fputcsv($fhandle, $fields);
             }
-            $result = fclose($fhandle);
-
-            return $result; // returns true or false
-        }
-        return false;
+            return fclose($fhandle); // returns true or false
+        }else{
+            return false;
+        } 
     }
-
-    /*
-     combine header with associated data
-     creates new array with header as key
-    */
+       
+    /**
+     * arrayToassociativeArray
+     * combine header with associated data
+     * creates new array with header as key
+     * @param  mixed $data
+     * @return array
+     */
     public function arrayToassociativeArray(array $data): array
     {
         $header = array_shift($data); // get first row / header
@@ -202,71 +261,82 @@ class DataController
     
         return $result;
     }
-
-    /*
-    format data in json and send to end point with http status code
-    */
-    protected function sendOutput(array $data, int $status_code): void
-    {   
-        http_response_code($status_code);
-        echo json_encode($data);
-    }
-
-    /*
-    validate type of fields 
-    */
+   
+    /**
+     * getValidationErrors
+     * validate type of fields 
+     * @param  mixed $data
+     * @return array
+     */
     public function getValidationErrors(array $data): array
     {
-        $errors = [];
+        $errors = []; // empty error array
+
+        // destructering data array
+        ['id' => $id, 'name' => $name, 'state' => $state, 'zip' => $zip,
+         'amount' => $amount, 'qty' => $qty, 'item' => $item] = $data;
 
         if (!empty($data)) {
 
             if (array_key_exists("id", $data)) {
 
-                if (filter_var($data["id"], FILTER_VALIDATE_INT) === false) {
-                    $errors[] = "id must be an integer";
+                if (filter_var($id, FILTER_VALIDATE_INT) === false) {
+                    $errors['id'] = "id must be an integer";
                 }
             }
 
-            if (empty($data["name"])) {
-                $errors[] = "name is required";
-            }
-
-            if (empty($data["state"])) {
-                if (filter_var($data["id"], FILTER_VALIDATE_INT) === false) {
-                    $errors[] = "state is required";
+            if (empty($name)) {
+                $errors['name'] = "name is required";
+            }else{
+                $name_regex = "/^[a-zA-Z ]+$/i";
+                if (!preg_match ($name_regex, $name) ) { 
+                    $errors['name'] = "Name is not valid";
                 }
             }
 
-            if (empty($data["zip"])) {
-                $errors[] = "zip is required";
+            if (empty($state)) {
+                    $errors['state'] = "state is required";
+            }else{
+                $state_regex = "/^[a-zA-Z ]+$/i";
+                if (!preg_match ($state_regex, $name) ) { 
+                    $errors['state'] = "State is not valid";
+                }
+            }
+
+            if (empty($zip)) {
+                $errors['zip'] = "zip is required";
             } else {
-                if (filter_var($data["zip"], FILTER_VALIDATE_INT) === false) {
-                    $errors[] = "zip must be an integer";
+                $zip_regex = "/^(?:\d{5,6})$/i"; 
+                if (!preg_match($zip_regex, $zip)) {
+                    $errors['zip'] = "ZipCode is not valid";
                 }
             }
 
-            if (empty($data["amount"])) {
-                $errors[] = "amount is required";
+            if (empty($amount)) {
+                $errors['amount'] = "amount is required";
             } else {
-                if (filter_var($data["amount"], FILTER_VALIDATE_FLOAT) === false) {
-                    $errors[] = "amount must be an float";
+                if (filter_var($amount, FILTER_VALIDATE_FLOAT) === false) {
+                    $errors['amount'] = "Amount is not valid";
                 }
             }
 
-            if (empty($data["qty"])) {
-                $errors[] = "qty is required";
+            if (empty($qty)) {
+                $errors['qty'] = "qty is required";
             } else {
-                if (filter_var($data["qty"], FILTER_VALIDATE_INT) === false) {
-                    $errors[] = "qty must be an integer";
+                if (filter_var($qty, FILTER_VALIDATE_INT) === false) {
+                    $errors['qty'] = "Qty is not valid";
                 }
             }
 
-            if (empty($data["item"])) {
-                $errors[] = "item is required";
+            if (empty($item)) {
+                $errors['item'] = "item is required";
+            }else{
+                $item_regex = "/^[a-zA-Z0-9]{3,10}$/";
+                if (!preg_match ($item_regex, $item) ) { 
+                    $errors['item'] = "Item is not valid";
+                }
             }
         }
-        print_r($errors);
         return $errors;
     }
 

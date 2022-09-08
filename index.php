@@ -24,8 +24,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 
     exit(0);
 }
-// send json content type
-header("Content-type: application/json; charset=UTF-8");
 
 $parts = explode("/", $_SERVER["REQUEST_URI"]);
 
@@ -40,7 +38,7 @@ $id = $parts[4] ?? null;
 
 $controller = new DataController(__DIR__ . '/src/data.csv');
 
-$controller->processRequest($_SERVER["REQUEST_METHOD"], $action, $id);
+$controller->processRequest($_SERVER["REQUEST_METHOD"], $action, intval($id));
 
 
 

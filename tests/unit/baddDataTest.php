@@ -15,7 +15,12 @@ class addDataTest extends \Codeception\Test\Unit
     {
     }
 
-    // tests
+      
+    /**
+     * testAddData
+     * 
+     * @return void
+     */
     public function testAddData()
     {
         $dataControllerbject = new DataController('tests/_data/data.csv');
@@ -24,7 +29,23 @@ class addDataTest extends \Codeception\Test\Unit
 
         $result = $dataControllerbject->addData($data);
         
-        $this->assertTrue($result, 'Failed to add data');
+        $this->assertTrue($result);
+
+    }
+    
+    /**
+     * testAddDataFail
+     *
+     * @return void
+     */
+    public function testAddDataFail()
+    {
+        $dataControllerbject = new DataController('tests/_data/data.csv');
+        $data = [];
+
+        $result = $dataControllerbject->addData($data);
+        
+        $this->assertFalse($result);
 
     }
 }

@@ -14,8 +14,13 @@ class arrayToassociativeArrayTest extends \Codeception\Test\Unit
     protected function _after()
     {
     }
-
-    // tests
+ 
+    /**
+     * testassociativeArray
+     * make first array elements as key to rest of the
+     * array element
+     * @return void
+     */
     public function testassociativeArray()
     {
         $dataControllerbject = new DataController(__DIR__ . '/src/data.csv');
