@@ -1,0 +1,8 @@
+[2022-09-12T12:38:45.588479+05:30] info.DEBUG: This is a debug message. [] []
+[2022-09-12T12:38:45.588853+05:30] info.INFO: This is an info level message. [] []
+[2022-09-12T12:38:45.588912+05:30] info.NOTICE: This is a notice level message. [] []
+[2022-09-12T12:38:45.588953+05:30] info.WARNING: This is a warning level message. [] []
+[2022-09-12T12:38:45.588991+05:30] info.ERROR: This is an error level message. [] []
+[2022-09-12T12:38:45.589026+05:30] info.CRITICAL: This is a critical level message. [] []
+[2022-09-12T12:38:45.589060+05:30] info.ALERT: This is an alert level message. [] []
+[2022-09-12T12:38:45.589094+05:30] info.EMERGENCY: This is an emergency level message. [] []

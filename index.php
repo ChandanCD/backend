@@ -1,10 +1,14 @@
 <?php
 // enable type restriction
 declare(strict_types=1);
+require __DIR__ . "/vendor/autoload.php"; // load packages installed from packages
+
+// define root path of application
+define('APPROOT', __DIR__ . '/src/');
 
 //instantiate SPL (Standard PHP Library) Autoloader
 spl_autoload_register(function ($class) {
-    require __DIR__ . "/src/$class.php";
+    require APPROOT . "Controllers/$class.php";
 });
 
 // Allow from any origin
@@ -36,7 +40,7 @@ $action = $parts[3] ?? "getdata"; // action allowed getdata, create , update , d
 
 $id = $parts[4] ?? null;
 
-$controller = new DataController(__DIR__ . '/src/data.csv');
+$controller = new OrderController(__DIR__ . '/src/data.csv');
 
 $controller->processRequest($_SERVER["REQUEST_METHOD"], $action, intval($id));
 
