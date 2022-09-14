@@ -27,17 +27,46 @@ class deleteDataTest extends \Codeception\Test\Unit
     protected function _after()
     {
     }
+    
+    /**
+     * testDeleteTest
+     *
+     * @return void
+     */
+    public function testDeleteTest()
+    {
+
+        $orderControllerObject = $this->createMock(OrderController::class);
+        $orderControllerObject->method("deleteOrderData")->willReturn(true);
+
+        $orderControllerObject
+        ->expects($this->once())
+        ->method("deleteOrderData")
+        ->with(5);
+
+        $result = $orderControllerObject->deleteOrderData(5);
+
+        $this->assertTrue($result);
+    }
    
     /**
      * testDeleteFail
-     * should return false on faile
+     * If 0 is passed to deleteOrderData funtion it will 
+     * Delete order data from csv file
      * @return void
      */
     public function testDeleteFail()
     {
-        $dataControllerbject = new DataController('tests/_data/data.csv');
-        //delete data
-        $result = $dataControllerbject->deleteData(0);  
+        $orderControllerObject = $this->createMock(OrderController::class);
+        $orderControllerObject->method("deleteOrderData")->willReturn(false);
+
+        $orderControllerObject
+        ->expects($this->once())
+        ->method("deleteOrderData")
+        ->with(0);
+
+        $result = $orderControllerObject->deleteOrderData(0);
+
         $this->assertFalse($result);
     }
 }

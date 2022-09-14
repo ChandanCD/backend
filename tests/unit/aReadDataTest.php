@@ -1,4 +1,7 @@
 <?php
+define('APPROOT', __DIR__ . '/../../src/'); // APPROOT contains the root path of the project
+
+require __DIR__ . "/../../src/Controllers/OrderController.php"; // include the class for the unit test cases
 
 /**
  * readDataTest
@@ -9,7 +12,7 @@ class readDataTest extends \Codeception\Test\Unit
      * @var \UnitTester
      */
     protected $tester;
-    private $csvFile = 'tests/_data/data.csv';
+    private $csvFilePath = 'tests/_data/data.csv';
     
     protected function _before()
     {
@@ -27,10 +30,10 @@ class readDataTest extends \Codeception\Test\Unit
      */
     public function testReadData()
     {
-        $dataCOntrollerbject = new DataController($this->csvFile);
+        $dataCOntrollerbject = new OrderController($this->csvFilePath);
 
         //read data
-        $result = $dataCOntrollerbject->readData($this->csvFile);
+        $result = $dataCOntrollerbject->readOrderData($this->csvFilePath);
 
         $this->assertIsArray($result, "returns array on success");
         $this->assertGreaterThanOrEqual(2, count($result)); // compare with number of array in csv file
@@ -38,20 +41,22 @@ class readDataTest extends \Codeception\Test\Unit
     
     /**
      * testFileReadable
-     * check if file is radable or not
+     * Check the whether the given csv file is 
+     * readable or not
      * @return void
      */
     public function testFileReadable(){
-        $this->assertFileIsReadable($this->csvFile);
+        $this->assertFileIsReadable($this->csvFilePath);
     }
     
     /**
      * testCsvWrite
-     * check if file is writable or not
+     * Check the whether the given csv file is 
+     * writable or not
      * @return void
      */
     public function testCsvWrite(): void
     {
-        $this->assertFileIsWritable($this->csvFile);
+        $this->assertFileIsWritable($this->csvFilePath);
     }
 }

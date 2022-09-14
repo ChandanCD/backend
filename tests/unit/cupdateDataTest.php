@@ -17,36 +17,49 @@ class updateDataTest extends \Codeception\Test\Unit
   
     /**
      * testUpdateData
-     *
+     * updateOrderData takes array as a parameter
+     * with fields mentioned as following
      * @return void
      */
     public function testUpdateData()
     {
-        $dataControllerbject = new DataController('tests/_data/data.csv');
-        $data = [
-            "id" => 1, "name" => 'Chandan', "state" => "Karnataka", 
-            "zip" => 560009, "amount" => 25.05, "qty" => 8, "item" => '8AC123'
-        ];
-        //update data
-        $result = $dataControllerbject->updateData($data);
+        
+        $orderControllerObject = $this->createMock(OrderController::class);
 
-        $this->assertIsInt($result);
+        $orderControllerObject
+        ->expects($this->once())
+        ->method("updateOrderData")
+        ->with(["id" => 5, "name" => 'Chandan', "state" => "Karnataka", 
+        "zip" => 560009, "amount" => 25.05, "qty" => 8, "item" => '8AC123'])
+        ->will($this->returnValue(true));
+
+
+        $result = $orderControllerObject->updateOrderData(["id" => 5, "name" => 'Chandan', "state" => "Karnataka", 
+        "zip" => 560009, "amount" => 25.05, "qty" => 8, "item" => '8AC123']);
+
+        $this->assertTrue($result);
     }
     
     /**
      * testUpdateDataFail
-     *
+     * If Id is not passed in array to updateOrderData
+     * it will not update into the csv file
      * @return void
      */
     public function testUpdateDataFail()
     {
-        $dataControllerbject = new DataController('tests/_data/data.csv');
-        $data = [
-            "name" => 'Chandan', "state" => "Karnataka", 
-            "zip" => 560009, "amount" => 25.05, "qty" => 8, "item" => '8AC123'
-        ];
-        //update data
-        $result = $dataControllerbject->updateData($data);
-        $this->assertSame(0, $result);
+        $orderControllerObject = $this->createMock(OrderController::class);
+
+        $orderControllerObject
+        ->expects($this->once())
+        ->method("updateOrderData")
+        ->with(["name" => 'Chandan', "state" => "Karnataka", 
+        "zip" => 560009, "amount" => 25.05, "qty" => 8, "item" => '8AC123'])
+        ->will($this->returnValue(false));
+
+
+        $result = $orderControllerObject->updateOrderData(["name" => 'Chandan', "state" => "Karnataka","zip" => 560009, "amount" => 25.05, "qty" => 8, "item" => '8AC123']);
+
+        $this->assertFalse($result);
     }
 }
