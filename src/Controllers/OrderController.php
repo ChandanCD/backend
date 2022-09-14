@@ -26,14 +26,14 @@ class OrderController implements CsvOrderData
     /**
      * __construct
      *
-     * @param  mixed $filePath
+     * @param  string $filePath
      * @return void
      */
     public function __construct(string $csvFilePath)
     {
         $this->csvFilePath = $csvFilePath;
 
-        //check if file
+        //check if file exists , if not throws an exception
         $this->checkCsvFile($this->csvFilePath);
         /**
          * Create object of Logger with channel-name Info
@@ -45,8 +45,9 @@ class OrderController implements CsvOrderData
     }
      
     /**
-     * processRequest
-     * Process GET, POST method
+     * processRequest based on GET, POST and actions
+     * this function acts as a route helps in directing to 
+     * controller function based on actions (getdata, create ,update , delete etc.)
      * @param  string $method
      * @param  string $action
      * @param  int $id
@@ -98,18 +99,7 @@ class OrderController implements CsvOrderData
         
                 $data = (array) json_decode(file_get_contents("php://input"), true);
 
-                $result = $this->deleteMultipleOrders($data);
-
-                if($result){
-                    return $this->successResponse(
-                        "Order deleted",
-                         true, 200
-                    );
-                }else{
-                    return $this->errorResponse(
-                        'Failed to delete', false
-                     , 304);
-                }
+                return $this->deleteMultipleOrders($data);
 
                 break;
             
@@ -121,24 +111,26 @@ class OrderController implements CsvOrderData
  
   /**
    * readData
-   * read data from csv
+   * opens csv file in read mode
+   * reads all the rows of csv and push into an array ,
+   * then returns the array
    * @param  string $path
    * @return array
    */
-  public function readOrderData(string $path): array
+  public function readOrderData(string $csvFilePath): array
   {
     try{
         $csv = [];
         // Open for reading only
-        if (($handle = fopen($path, "r")) !== FALSE) {
+        if (($handle = fopen($csvFilePath, "r")) !== FALSE) {
             while (($data = fgetcsv($handle)) !== FALSE) {
-                $csv[] = $data;
+                $csv[] = $data; // push each row into an array
             }
-            fclose($handle);
+            fclose($handle);// after read is complete close the file
         }else{
             throw new Exception("Failed to open file in write mode");
         }
-        return $csv;
+        return $csv; 
     }catch(Exception $e){
 
         $response = $e->getMessage();
@@ -152,10 +144,11 @@ class OrderController implements CsvOrderData
   }
    
     /**
-     * updateData
-     * update data based on id
+     * updateOrderData
+     * read order data from csv file , compare row-id with given id and
+     * re-assign new array to selected row
      * @param  array $data
-     * @return int
+     * @return json
      */
     public function updateOrderData(array $data)
     {
@@ -164,8 +157,10 @@ class OrderController implements CsvOrderData
             $id = array_key_exists("id",$data) ? $data['id'] : 0 ;
             $getAllData = $this->readOrderData($this->csvFilePath);
             $num = count($getAllData);
-            // skip header , start from next row
+            // skip header , iterate from next row
             for($i = 1; $i < $num; $i++){
+                // compare id of array to be updated with existing array and 
+                // re-assign array values to selected array
                 if (is_numeric($getAllData[$i][0]) && $getAllData[$i][0] == $id) {
                     $getAllData[$i] = array_values($data); // get only values from assiciative array
                     break;
@@ -177,9 +172,11 @@ class OrderController implements CsvOrderData
             if($result){
 
                 return $this->successResponse(
-                    "$id updated",
+                    $result,
                      true, 200
                 );
+            }else{
+                throw new Exception("Failed to update order data");
             }
 
         }catch(Exception $e){
@@ -195,10 +192,11 @@ class OrderController implements CsvOrderData
     }
   
     /**
-     * deleteData
-     * remove data from csv
+     * deleteOrderData
+     * read order data from csv file , compare row-id with given id and
+     * splice/remove the array from existing order data
      * @param  int $id
-     * @return bool
+     * @return json
      */
     public function deleteOrderData(int $id)
     {
@@ -209,7 +207,7 @@ class OrderController implements CsvOrderData
             $getAllData = $this->readOrderData($this->csvFilePath);
     
             $num = count($getAllData);
-            // skip heaer , start from next row
+            // skip heaer , iterate from next row
             for($i = 1; $i < $num; $i++){
     
                 if (is_numeric($getAllData[$i][0]) && $getAllData[$i][0] == $id) {
@@ -222,9 +220,11 @@ class OrderController implements CsvOrderData
 
             if($result){
                 return $this->successResponse(
-                    "data deleted",
+                    $result,
                      true, 200
                 );
+            }else{
+                throw new Exception("Failed to delete order data");
             }
 
         }catch(Exception $e){
@@ -240,10 +240,11 @@ class OrderController implements CsvOrderData
     }
  
     /**
-     * addData
-     * adds data into csv
+     * addOrderData
+     * read order data from csv file , compare row-id with given id and
+     * push new array data exiting array and write into csv file
      * @param  array $data
-     * @return bool
+     * @return json
      */
     public function addOrderData(array $data)
     {
@@ -273,9 +274,11 @@ class OrderController implements CsvOrderData
 
             if($result){
                 return $this->successResponse(
-                    "data created",
+                    $result,
                      true, 200
                 );
+            }else{
+                throw new Exception("Failed to create order"); 
             }
 
         }catch(Exception $e){
@@ -361,13 +364,19 @@ class OrderController implements CsvOrderData
                 }
             }
         }catch(Exception $e){
-            echo $e->getMessage();
+            $response = $e->getMessage();
+            $this->logger->error($response);
+
+            return $this->errorResponse(
+                $response, false
+             , 304);    
         }
     }
    
     /**
      * getValidationErrors
-     * validate type of fields 
+     * checks if any field is mandatory or not
+     * check allowed characters and numbers for indivisual fields
      * @param  array $data
      * @return array
      */
